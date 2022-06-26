@@ -1,0 +1,13 @@
+[Unit]
+Description=Disables the power-LED and active-LED
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=sh -c "echo 0 >> /sys/class/leds/led0/brightness"
+ExecStop=sh -c "echo 255 >> /sys/class/leds/led0/brightness"
+
+[Install]
+WantedBy=multi-user.target
+
+
