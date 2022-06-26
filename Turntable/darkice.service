@@ -1,0 +1,16 @@
+[Unit]
+Description=DarkIce Live Audio Streamer 
+Requires=icecast2.service
+
+ 
+[Service]
+Type=simple
+StandardOutput=journal
+Restart=on-failure
+RestartSec=10s
+ExecStart=/usr/bin/darkice -v 9  -c /etc/darkice.cfg 
+ExecReload=/bin/kill -HUP $MAINPID
+WorkingDirectory=/tmp/
+ 
+[Install]
+WantedBy=multi-user.target
