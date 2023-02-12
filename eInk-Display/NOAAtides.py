@@ -2,7 +2,14 @@ import requests
 import json 
 from datetime import date, timedelta, datetime
 
+# station IDs: 
+# https://tidesandcurrents.noaa.gov/map/index.html
+# BAltimore - Fort McHenry 8574680
+# Savannah - Fort Pulaski 8670870
+# Cape May NJ 8536110
+
 TODAY = datetime.now()
+
 today= TODAY.strftime("%Y%m%d")
 TOMORROW = TODAY + timedelta(1)
 tomorrow = TOMORROW.strftime("%Y%m%d")
