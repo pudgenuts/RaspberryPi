@@ -6,6 +6,7 @@ from datetime import date, timedelta, datetime
 # https://tidesandcurrents.noaa.gov/map/index.html
 # BAltimore - Fort McHenry 8574680
 # Savannah - Fort Pulaski 8670870
+# Hilton Head Island - Port Royal Plantation - 8669167
 # Cape May NJ 8536110
 
 TODAY = datetime.now()
