@@ -1,10 +1,22 @@
 import requests
 import json 
 from datetime import date, timedelta, datetime
+import argparse 
+
+version = "0.1" 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--stationID')
+
+args = parser.parse_args()
+
+stationID=8574680
+if args.stationID is None: 
+    stationID = args.stationID
 
 # station IDs: 
 # https://tidesandcurrents.noaa.gov/map/index.html
-# BAltimore - Fort McHenry 8574680
+# Baltimore - Fort McHenry 8574680
 # Savannah - Fort Pulaski 8670870
 # Hilton Head Island - Port Royal Plantation - 8669167
 # Cape May NJ 8536110
