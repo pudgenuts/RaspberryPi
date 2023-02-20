@@ -188,8 +188,8 @@ def drawFrameBlackWhite(OutsideTemp):
                     draw.text((0,off), LINE, font=font18, fill = 0)
                     off = off + 23
                 lineNumber = lineNumber +1
-       	if count == 2: 
-            break
+       	    if count == 2: 
+                break
             draw.line((0,off, 800, off), fill = 0,width = 5 )  # horizontal line 
             # draw.line((0, 120, 800, 120), fill = 0,width = 5 )  # horizontal line 
             # draw.line((350, 120, 350, 600), fill = 0,width = 5 )  # vertical line 
