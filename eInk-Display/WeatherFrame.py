@@ -188,7 +188,7 @@ def drawFrameBlackWhite(OutsideTemp):
                     draw.text((0,off), LINE, font=font18, fill = 0)
                     off = off + 23
                 lineNumber = lineNumber +1
-        if count == 2: 
+       	if count == 2: 
             break
             draw.line((0,off, 800, off), fill = 0,width = 5 )  # horizontal line 
             # draw.line((0, 120, 800, 120), fill = 0,width = 5 )  # horizontal line 
@@ -252,7 +252,7 @@ def main():
     today= TODAY.strftime("%Y%m%d") 
     tomorrow = TOMORROW.strftime("%Y%m%d")
     
-    Tides = fetchTides(stationID,today,tomorrow): 
+    Tides = fetchTides(stationID,today,tomorrow)
 
 
     try: 
