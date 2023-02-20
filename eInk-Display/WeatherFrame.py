@@ -70,8 +70,9 @@ global icons_list; icons_list = {u'01d':u'B',u'01n':u'C',u'02d':u'H',u'02n':u'I'
 
 def fetchTides(stationID,today,tomorrow): 
 
-    tides = [] 
+    tides = []
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station=8574680&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=json".format(today,tomorrow) 
+    print(URL)
     response = requests.get(URL) 
 
     json_object = json.loads(response.content) 
@@ -87,11 +88,11 @@ def fetchTides(stationID,today,tomorrow):
             seconds = seconds - (hours * 3600) 
             minutes = seconds // 60 
             seconds = seconds - (minutes * 60) 
-            # total time 
             TimeUntilNextTide = "{:02} hours {:02} minutes".format(int(hours), int(minutes)) 
-            # result: 03:43:40 
-
+            
             if prediction['type'] == "L": 
+                tides.append({"type": "LOW", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide. "tideHeight" : prediction['v'] })
+                
                 # print("prediction LOW time: {} in {} hours {} minutes ".format(datetime.datetime(predictionTime, "%H:%M %m-%d"), DELTA.total.hours,DELTA.total.minutes) 
                 print("prediction LOW tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
             elif prediction['type'] == "H": 
