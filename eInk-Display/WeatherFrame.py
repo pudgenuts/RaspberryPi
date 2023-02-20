@@ -4,7 +4,6 @@ import os
 import urllib.request
 
 import logging
-from waveshare_epd import epd7in5_V2
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
@@ -16,6 +15,10 @@ import requests
 import json 
 from datetime import date, timedelta, datetime
 import argparse 
+
+# sys.path.insert(1, '/path/to/application/app/folder')
+from waveshare_epd import epd7in5_V2
+
 
 version = "0.1" 
 
@@ -44,20 +47,23 @@ if os.path.exists(libdir):
 # global font_weather_icons; font_weather_icons = ImageFont.truetype('fonts/meteocons-webfont.ttf', 45)
 
 # global font_cal; font_cal = ImageFont.truetype('/usr/local/share/fonts/truetype/freefont/FreeMonoBold.ttf', 16)
-global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36)
-global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
-global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
+
+# global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36)
+# global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
+# global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
 
 global font_day; font_day = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 110)
 global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
 global font_day_str; font_day_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 35)
 global font_month_str; font_month_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 25)
-global font_weather_icons; font_weather_icons = ImageFont.truetype('/usr/local/share/fonts/meteocons-webfont.ttf', 45)
+global font_weather_icons; font_weather_icons = ImageFont.truetype('/usr/local/share/fonts/meteocons-font/FONT/Font-face/meteocons-webfont.ttf', 45)
 global font_tasks_list_title; font_tasks_list_title = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 30)
-global font_tasks_list; font_tasks_list = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 12)
-global font_tasks_due_date; font_tasks_due_date = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 11)
-global font_tasks_priority; font_tasks_priority = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 9)
-global font_update_moment; font_update_moment = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 9)
+
+# these fonts aren't used 
+# global font_tasks_list; font_tasks_list = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 12)
+# global font_tasks_due_date; font_tasks_due_date = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 11)
+# global font_tasks_priority; font_tasks_priority = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 9)
+# global font_update_moment; font_update_moment = ImageFont.truetype('/usr/local/share/fonts/tahoma.ttf', 9)
 global icons_list; icons_list = {u'01d':u'B',u'01n':u'C',u'02d':u'H',u'02n':u'I',u'03d':u'N',u'03n':u'N',u'04d':u'Y',u'04n':u'Y',u'09d':u'R',u'09n':u'R',u'10d':u'R',u'10n':u'R',u'11d':u'P',u'11n':u'P',u'13d':u'W',u'13n':u'W',u'50d':u'M',u'50n':u'W'}
 
 # --------------------
