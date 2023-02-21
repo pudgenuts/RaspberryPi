@@ -91,28 +91,31 @@ def fetchTides(stationID,today,tomorrow):
             TimeUntilNextTide = "{:02} hours {:02} minutes".format(int(hours), int(minutes)) 
             
             if prediction['type'] == "L": 
-                tides.append({"type": "LOW", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide. "tideHeight" : prediction['v'] })
-                
-                # print("prediction LOW time: {} in {} hours {} minutes ".format(datetime.datetime(predictionTime, "%H:%M %m-%d"), DELTA.total.hours,DELTA.total.minutes) 
+                tides.append({"type": "LOW", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide, "tideHeight" : prediction['v'] })
                 print("prediction LOW tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
             elif prediction['type'] == "H": 
-                print("prediction HIGH time: {}".format(predictionTime)) 
-                # print("---")
+                tides.append({"type": "HIGH", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide, "tideHeight" : prediction['v'] })
+                print("prediction HIGH tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
 
         #json_formatted_str = json.dumps(json_object, indent=2) 
         #print(json_formatted_str)
+    return tides 
 
-def fetchWaterTemps(stationID): 
+
+def fetchWaterTemps(stationID,today,tomorrow): 
     # Water tempratues 
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station=8574680&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow) 
     print(URL) 
     response = requests.get(URL) 
     json_object = json.loads(response.content) 
-    for waterTemp in json_object['data']: 
-        predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
-        DELTA = (predictionTime - datetime.now()) 
-        if DELTA.total_seconds() > 0: 
-            print("{} F at {}".format( waterTemp['v'], waterTemp['t']))
+    if json_object['error'] is not None: 
+        print(json_object['error']['message'])
+    else:
+    	for waterTemp in json_object['data']: 
+            predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
+            DELTA = (predictionTime - datetime.now()) 
+            if DELTA.total_seconds() > 0: 
+                print("{} F at {}".format( waterTemp['v'], waterTemp['t']))
 
 def convertC2F(C):
         return ((C * 9/5) +32)
@@ -260,6 +263,9 @@ def main():
     tomorrow = TOMORROW.strftime("%Y%m%d")
     
     Tides = fetchTides(stationID,today,tomorrow)
+    print(Tides)
+    fetchWaterTemps(stationID,today,tomorrow) 
+
 
 
     try: 
