@@ -71,7 +71,7 @@ global icons_list; icons_list = {u'01d':u'B',u'01n':u'C',u'02d':u'H',u'02n':u'I'
 def fetchTides(stationID,today,tomorrow): 
 
     tides = []
-    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station=8574680&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=json".format(today,tomorrow) 
+    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=json".format(today,tomorrow,stationID) 
     print(URL)
     response = requests.get(URL) 
 
@@ -104,18 +104,18 @@ def fetchTides(stationID,today,tomorrow):
 
 def fetchWaterTemps(stationID,today,tomorrow): 
     # Water tempratues 
-    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station=8574680&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow) 
+    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
+    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
     print(URL) 
     response = requests.get(URL) 
     json_object = json.loads(response.content) 
-    if json_object['error'] is not None: 
-        print(json_object['error']['message'])
-    else:
-    	for waterTemp in json_object['data']: 
-            predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
-            DELTA = (predictionTime - datetime.now()) 
-            if DELTA.total_seconds() > 0: 
-                print("{} F at {}".format( waterTemp['v'], waterTemp['t']))
+    print(json_object) 
+    for waterTemp in json_object['data']: 
+        print(waterTemp)
+        predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
+        DELTA = (predictionTime - datetime.now()) 
+        if DELTA.total_seconds() > 0: 
+            print("{} F at {}".format( waterTemp['v'], waterTemp['t']))
 
 def convertC2F(C):
         return ((C * 9/5) +32)
