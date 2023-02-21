@@ -151,13 +151,15 @@ def fetchNOAAhourly(today):
     hourly = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly")
     hourlyForecast = json.loads(hourly.read().decode())
 
+    return hourlyForecast
+
 
 def fetchNOAAdaily(today): 
     # today = date.today()
     day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
     dayForecast = json.loads(day.read().decode())
 
-
+    return dayForecast
 
 
 
@@ -254,8 +256,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.stationID is None: 
+    if args.stationID is not None: 
         stationID = args.stationID
+
 
     TODAY = datetime.now() 
     TOMORROW = TODAY + timedelta(1) 
@@ -266,6 +269,12 @@ def main():
     print(Tides)
     fetchWaterTemps(stationID,today,tomorrow) 
 
+    day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us") 
+    print(day)
+    
+    hourly = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly") 
+    print(hourly)
+   
 
 
     try: 
@@ -285,51 +294,12 @@ if __name__ == '__main__':
 
 
 
-                # 1 => Sunny
-                # 3 => Partly Cloudy? 
-                # 5 => Cloudy 
-                # 6 => lightning cloud 
-                # 7 => little rain /drizzle
-                # 8 => rain
-                # 9 => windy 
-                # 0 > lightning (white clouds) 
-                # ! => windy rain
-                # \ =>  snow 
-                # " => heavy snow 
-                # # => hail 
-                # $ => cloudy 
-                # % => lightning 
-                # ' => thermometer
-                # & => 
-                # , => 
-                # ( => compass 
-                # ) => n/a 
-                # * => C 
-                # + => F
-                # A => Fog
-                # B => Sunny 
-                # C => moon (clear) 
-                # D => Eclipse 
-                # E => Mist
-                # F => Windy
-                # G => Snowflake
-                # H => partly cloudy/sunny?
-                # I => partly cloudy / moon
-                # J => fog + sun 
-                # K => fog + moon
-                # L => fog + clouds
-                # M => FOG
-                # N => cloud
-                # O => cloud + lightning
-                # P => cloud + lightning
-                # Q => drizzle
-                # R => rain
-                # S => windy  + cloud
-                # T => windy + cloud + rain  
-                # U => snow
-                # V => snow 
-                # W => heavy snow 
-                # X => hail 
-                # Y => clody 
-                # Z => clouds + lightning
+# 1 => Sunny # 3 => Partly Cloudy?  # 5 => Cloudy # 6 => lightning cloud # 7 => little rain /drizzle # 8 => rain
+# 9 => windy # 0 > lightning (white clouds) # ! => windy rain # \ =>  snow # " => heavy snow 
+# # => hail # $ => cloudy # % => lightning # ' => thermometer # & => # , => # ( => compass 
+# ) => n/a # * => C # + => F # A => Fog # B => Sunny # C => moon (clear) # D => Eclipse # E => Mist # F => Windy
+# G => Snowflake # H => partly cloudy/sunny?  # I => partly cloudy / moon # J => fog + sun # K => fog + moon
+# L => fog + clouds # M => FOG # N => cloud # O => cloud + lightning # P => cloud + lightning
+# Q => drizzle # R => rain # S => windy  + cloud # T => windy + cloud + rain  # U => snow # V => snow # W => heavy snow 
+# X => hail # Y => clody # Z => clouds + lightning
 
