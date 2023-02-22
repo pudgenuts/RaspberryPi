@@ -139,7 +139,7 @@ def query_weather(url):
         try:
             # response = requests.get(url).json()
             response = urllib.request.urlopen(url)
-            print(response)
+            # print(response)
             break
         except:
             print('-= Weather API JSON Failed - Will Try Again =-')
@@ -179,7 +179,7 @@ def drawFrameBlackWhite(OutsideTemp):
         if type(OutsideTemp) is str: 
             currentTemp = "curent temp: unknown"
         else: 
-            currentTemp = "curent temp: {:.2f} F".format(F)
+            currentTemp = "curent temp: {:.2f} F".format(OutsideTemp)
         draw.text((550, 20), currentTemp , font = font24, fill = 0)
         
         draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line 
@@ -269,11 +269,28 @@ def main():
     print(Tides)
     fetchWaterTemps(stationID,today,tomorrow) 
 
-    day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us") 
-    print(day)
-    
-    hourly = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly") 
-    print(hourly)
+    day = fetchNOAAdaily(today)
+    # print(day)
+    print("===")
+    for item in day['properties']['periods']:
+        print(item['name'])
+        print(item['detailedForecast']) 
+        print()
+        if item['number'] == 2: 
+            break
+
+    print("===")
+    hourly = fetchNOAAhourly(today)
+    # print(hourly)
+    for item in hourly['properties']['periods']: 
+        # {'number': 10, 'name': '', 'startTime': '2023-02-22T06:00:00-05:00', 'endTime': '2023-02-22T07:00:00-05:00', 'isDaytime': True, 'temperature': 36, 'temperatureUnit': 'F', 'temperatureTrend': None, 'probabilityOfPrecipitation': {'unitCode': 'wmoUnit:percent', 'value': 2}, 'dewpoint': {'unitCode': 'wmoUnit:degC', 'value': -3.888888888888889}, 'relativeHumidity': {'unitCode': 'wmoUnit:percent', 'value': 64}, 'windSpeed': '5 mph', 'windDirection': 'NE', 'icon': 'https://api.weather.gov/icons/land/day/bkn,2?size=small', 'shortForecast': 'Mostly Cloudy', 'detailedForecast': ''}
+        start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
+
+        print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
+        # print("\tdew point{}".format(item['dewpoint']['value']))
+        print()
+        if item['number'] == 10: 
+            break
    
 
 
