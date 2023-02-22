@@ -281,8 +281,6 @@ def main():
         F = fetchCurrentTempNetamo()
     except:
         F = "unk"
-    
-
 
 
 
