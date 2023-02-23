@@ -22,7 +22,15 @@ from waveshare_epd import epd7in5_V2
 
 version = "0.1" 
 
-global args
+global args 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--stationID')
+parser.add_argument('-v', dest='verbose', action='store_true')
+parser.add_argument('-d', dest='debug', action='store_true')
+
+args = parser.parse_args()
+
 
 fontDir = '/usr/local/share/fonts/';
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
@@ -48,9 +56,9 @@ if os.path.exists(libdir):
 
 # global font_cal; font_cal = ImageFont.truetype('/usr/local/share/fonts/truetype/freefont/FreeMonoBold.ttf', 16)
 
-# global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36)
-# global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
-# global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
+global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36)
+global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
+global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
 
 global font_day; font_day = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 110)
 global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
@@ -72,7 +80,8 @@ def fetchTides(stationID,today,tomorrow):
 
     tides = []
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=json".format(today,tomorrow,stationID) 
-    print(URL)
+    if args.debug is True: 
+        print(URL)
     response = requests.get(URL) 
 
     json_object = json.loads(response.content) 
@@ -92,10 +101,12 @@ def fetchTides(stationID,today,tomorrow):
             
             if prediction['type'] == "L": 
                 tides.append({"type": "LOW", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide, "tideHeight" : prediction['v'] })
-                print("prediction LOW tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
+                if args.debug is True: 
+                    print("prediction LOW tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
             elif prediction['type'] == "H": 
                 tides.append({"type": "HIGH", "time" : predictionTime.strftime("%I:%M %p %m-%d"), "timeUntilTide" : TimeUntilNextTide, "tideHeight" : prediction['v'] })
-                print("prediction HIGH tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
+                if args.debug is True: 
+                    print("prediction HIGH tide: {} in {}  at {} feet".format(predictionTime.strftime("%I:%M %p %m-%d"), TimeUntilNextTide, prediction['v'])) 
 
         #json_formatted_str = json.dumps(json_object, indent=2) 
         #print(json_formatted_str)
@@ -104,12 +115,14 @@ def fetchTides(stationID,today,tomorrow):
 
 def fetchWaterTemps(stationID,today,tomorrow): 
     # Water tempratues 
-    URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
+    # URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
-    print(URL) 
+    if args.debug is True:
+        print(URL) 
     response = requests.get(URL) 
     json_object = json.loads(response.content) 
-    print(json_object) 
+    if args.debug is True: 
+        print(json_object) 
     for waterTemp in json_object['data']: 
         print(waterTemp)
         predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
@@ -134,7 +147,8 @@ def fetchCurrentTempNetamo():
 def query_weather(url):
     # global weather_response
     # global forecast_response
-    print('-= Ping Weather API =- %s' %(url))
+    if args.debug is True: 
+        print('-= Ping Weather API =- %s' %(url))
     while True:
         try:
             # response = requests.get(url).json()
@@ -173,6 +187,7 @@ def drawFrameBlackWhite(OutsideTemp):
         logging.info("1.Drawing on the Horizontal image...")
         Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
         draw = ImageDraw.Draw(Himage)
+
         now = datetime.now()
         N = now.strftime("%B %d, %Y  %H:%M")
         draw.text((15, 20), N , font = font24, fill = 0)
@@ -246,15 +261,80 @@ def drawFrameBlackWhite(OutsideTemp):
         epd7in5_V2.epdconfig.module_exit()
 
 
+def drawFrame(OutsideTemp, dayForcast, hours ): 
+    epd = epd7in5_V2.EPD() 
+    print(epd)
+    epd.init() 
+    epd.Clear() 
+    logging.info("1.Drawing on the Horizontal image...") 
+    Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame 
+    draw = ImageDraw.Draw(Himage)
+
+    now = datetime.now() 
+    N = now.strftime("%B %d, %Y  %H:%M") 
+    draw.text((15, 20), N , font = font24, fill = 0) 
+    if type(OutsideTemp) is str:
+        currentTemp = "curent temp: unknown" 
+    else: 
+        currentTemp = "curent temp: {:.2f} F".format(OutsideTemp) 
+
+    draw.text((550, 20), currentTemp , font = font24, fill = 0) 
+    draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line
+
+    off = 70 
+    for line in dayForcast: 
+        lineNumber = 1 
+        forecast = textwrap.wrap(line, width=90) 
+        for text in forecast: 
+            if lineNumber == 1: 
+                draw.text((0,off), text, font=font18, fill = 0) 
+                off = off + 23 
+            else: 
+                draw.text((25,off), text, font=font18, fill = 0) 
+                off = off + 23 
+                lineNumber = lineNumber +1
+        off = off+10
+        # draw.text((0,off), line, font=font18, fill = 0) 
+
+    draw.line((0,off, 800, off), fill = 0,width = 5 )  # horizontal line 
+    # draw.line((0, 120, 800, 120), fill = 0,width = 5 )  # horizontal line 
+    # draw.line((350, 120, 350, 600), fill = 0,width = 5 )  # vertical line 
+    draw.line((400, off, 400, 600), fill = 0,width = 5 )  # vertical linep 
+
+
+    offset = off + 5 
+    #  2 AM 47 F / 93% -- Slight Chance Rain Showers
+    for item in hours: 
+        draw.text((10,offset), item, font=font18, fill = 0) 
+        # draw.text((75,offset), str(item['temperature']).rjust(3), font=font18, fill = 0) 
+        # draw.text((100,offset), str(item['temperatureUnit']), font=font18, fill = 0) 
+        # draw.text((145,offset), hourly, font=font_weather, fill = 0) 
+        offset = offset+25
+# if item['shortForecast'] == "Mostly Sunny" : 
+#   draw.text((155,offset), "B", font=font_weather_icons, fille=0)
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# elif item['shortForecast'] == "Mostly Sunny" : 
+# hourly = "{}   {} {}   {} winds {} from the {}".format(start.strftime("%-I %p").rjust(5),str(item['temperature']).rjust(3),item['temperatureUnit'],item['shortForecast'],item['windSpeed'],item['windDirection'])
+# hourly = "{} winds {} from the {}".format(item['shortForecast'],item['windSpeed'],item['windDirection'])
+# hourly = "{}".format(item['shortForecast'])
+
+
+    # 5 AM 56 F / 83% -- Chance Rain Showers
+
+
+    epd.display(epd.getbuffer(Himage)) 
+    epd.sleep()
+
+
+
+
 def main(): 
     stationID=8574680 
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--stationID')
-    parser.add_argument('-v', dest='verbose', action='store_true')
-    parser.add_argument('-d', dest='debug', action='store_true')
-
-    args = parser.parse_args()
 
     if args.stationID is not None: 
         stationID = args.stationID
@@ -271,28 +351,30 @@ def main():
 
     day = fetchNOAAdaily(today)
     # print(day)
-    print("===")
+    # print("===")
+    dayForcast = []
     for item in day['properties']['periods']:
-        print(item['name'])
-        print(item['detailedForecast']) 
-        print()
+        dayForcast.append("{}: {}".format(item['name'],item['detailedForecast']))
+        # print(item['name'])
+        # print(item['detailedForecast']) 
+        # print()
         if item['number'] == 2: 
             break
 
     print("===")
     hourly = fetchNOAAhourly(today)
     # print(hourly)
+    hours = [] 
     for item in hourly['properties']['periods']: 
         # {'number': 10, 'name': '', 'startTime': '2023-02-22T06:00:00-05:00', 'endTime': '2023-02-22T07:00:00-05:00', 'isDaytime': True, 'temperature': 36, 'temperatureUnit': 'F', 'temperatureTrend': None, 'probabilityOfPrecipitation': {'unitCode': 'wmoUnit:percent', 'value': 2}, 'dewpoint': {'unitCode': 'wmoUnit:degC', 'value': -3.888888888888889}, 'relativeHumidity': {'unitCode': 'wmoUnit:percent', 'value': 64}, 'windSpeed': '5 mph', 'windDirection': 'NE', 'icon': 'https://api.weather.gov/icons/land/day/bkn,2?size=small', 'shortForecast': 'Mostly Cloudy', 'detailedForecast': ''}
         start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
 
         print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
+        hours.append("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
         # print("\tdew point{}".format(item['dewpoint']['value']))
         print()
         if item['number'] == 10: 
             break
-   
-
 
     try: 
         F = fetchCurrentTempNetamo()
@@ -300,6 +382,7 @@ def main():
         F = "unk"
 
 
+    drawFrame(F,dayForcast,hours)
 
 if __name__ == '__main__': 
     main() 
