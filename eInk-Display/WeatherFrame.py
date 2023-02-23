@@ -59,6 +59,7 @@ if os.path.exists(libdir):
 global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36)
 global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
 global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
+global font16; font16 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 16)
 
 global font_day; font_day = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 110)
 global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
@@ -114,6 +115,7 @@ def fetchTides(stationID,today,tomorrow):
 
 
 def fetchWaterTemps(stationID,today,tomorrow): 
+    temps = []
     # Water tempratues 
     # URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
@@ -122,13 +124,24 @@ def fetchWaterTemps(stationID,today,tomorrow):
     response = requests.get(URL) 
     json_object = json.loads(response.content) 
     if args.debug is True: 
+        print("debug:")
         print(json_object) 
     for waterTemp in json_object['data']: 
-        print(waterTemp)
-        predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
-        DELTA = (predictionTime - datetime.now()) 
-        if DELTA.total_seconds() > 0: 
-            print("{} F at {}".format( waterTemp['v'], waterTemp['t']))
+        start = datetime.strptime(waterTemp['t'],  "%Y-%m-%d %H:%M")
+        # print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
+
+        value = "{} F at {}".format( waterTemp['v'], start.strftime("%-I %p").rjust(5) ) 
+        temps.append(value)
+        # predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
+        # DELTA = (predictionTime - datetime.now()) 
+        # if DELTA.total_seconds() > 0: 
+            # value = "{} F at {}".format( waterTemp['v'], waterTemp['t'])
+            # print(value)
+            # temps.append(value)
+            # print(">> {} F at {}".format( waterTemp['v'], waterTemp['t']))
+
+    return temps
+
 
 def convertC2F(C):
         return ((C * 9/5) +32)
@@ -261,7 +274,7 @@ def drawFrameBlackWhite(OutsideTemp):
         epd7in5_V2.epdconfig.module_exit()
 
 
-def drawFrame(OutsideTemp, dayForcast, hours ): 
+def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures): 
     epd = epd7in5_V2.EPD() 
     print(epd)
     epd.init() 
@@ -303,28 +316,33 @@ def drawFrame(OutsideTemp, dayForcast, hours ):
 
 
     offset = off + 5 
+    START = offset 
     #  2 AM 47 F / 93% -- Slight Chance Rain Showers
     for item in hours: 
         draw.text((10,offset), item, font=font18, fill = 0) 
-        # draw.text((75,offset), str(item['temperature']).rjust(3), font=font18, fill = 0) 
-        # draw.text((100,offset), str(item['temperatureUnit']), font=font18, fill = 0) 
-        # draw.text((145,offset), hourly, font=font_weather, fill = 0) 
         offset = offset+25
-# if item['shortForecast'] == "Mostly Sunny" : 
-#   draw.text((155,offset), "B", font=font_weather_icons, fille=0)
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# elif item['shortForecast'] == "Mostly Sunny" : 
-# hourly = "{}   {} {}   {} winds {} from the {}".format(start.strftime("%-I %p").rjust(5),str(item['temperature']).rjust(3),item['temperatureUnit'],item['shortForecast'],item['windSpeed'],item['windDirection'])
-# hourly = "{} winds {} from the {}".format(item['shortForecast'],item['windSpeed'],item['windDirection'])
-# hourly = "{}".format(item['shortForecast'])
 
+    count = 0
+    offset = START 
+    for tide in tidePredictions: 
+        # print(tide)
+        prediction = "{} at {}".format(tide['type'],tide['time'])
+        draw.text((410,offset), prediction, font=font18, fill = 0) 
+        count = count + 1
+        offset = offset+25
+        if count == 3: 
+            break
 
-    # 5 AM 56 F / 83% -- Chance Rain Showers
+    offset = offset+5
+    print(WaterTempratures)
+
+    
+    for item in WaterTempratures:
+        # start = datetime.strptime(item['t'], '%Y-%m-%d %H:%M')
+        # {'t': '2023-02-23 00:00', 'v': '44.8', 'f': '0,0,0'}
+        # prediction = "{} {} F ".format(item['t'], item['v'])
+        draw.text((410,offset), item, font=font16, fill = 0) 
+        offset = offset+20
 
 
     epd.display(epd.getbuffer(Himage)) 
@@ -346,8 +364,11 @@ def main():
     tomorrow = TOMORROW.strftime("%Y%m%d")
     
     Tides = fetchTides(stationID,today,tomorrow)
-    print(Tides)
-    fetchWaterTemps(stationID,today,tomorrow) 
+    for tidePrediction in Tides: 
+        print(tidePrediction)
+
+    waterTempratures = fetchWaterTemps(stationID,today,tomorrow) 
+    # print(waterTempratures)
 
     day = fetchNOAAdaily(today)
     # print(day)
@@ -368,7 +389,6 @@ def main():
     for item in hourly['properties']['periods']: 
         # {'number': 10, 'name': '', 'startTime': '2023-02-22T06:00:00-05:00', 'endTime': '2023-02-22T07:00:00-05:00', 'isDaytime': True, 'temperature': 36, 'temperatureUnit': 'F', 'temperatureTrend': None, 'probabilityOfPrecipitation': {'unitCode': 'wmoUnit:percent', 'value': 2}, 'dewpoint': {'unitCode': 'wmoUnit:degC', 'value': -3.888888888888889}, 'relativeHumidity': {'unitCode': 'wmoUnit:percent', 'value': 64}, 'windSpeed': '5 mph', 'windDirection': 'NE', 'icon': 'https://api.weather.gov/icons/land/day/bkn,2?size=small', 'shortForecast': 'Mostly Cloudy', 'detailedForecast': ''}
         start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
-
         print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
         hours.append("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
         # print("\tdew point{}".format(item['dewpoint']['value']))
@@ -382,7 +402,7 @@ def main():
         F = "unk"
 
 
-    drawFrame(F,dayForcast,hours)
+    drawFrame(F,dayForcast,hours, Tides, waterTempratures)
 
 if __name__ == '__main__': 
     main() 
