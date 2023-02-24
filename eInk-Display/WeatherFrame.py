@@ -242,9 +242,9 @@ def drawFrameBlackWhite(OutsideTemp):
                 start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
                 # print(start.strftime("%-I %p"))
                 
-                draw.text((10,offset), start.strftime("%-I %p").rjust(5), font=font18, fill = 0)
-                draw.text((75,offset), str(item['temperature']).rjust(3), font=font18, fill = 0)
-                draw.text((100,offset), str(item['temperatureUnit']), font=font18, fill = 0)
+                draw.text((10,offset), start.strftime("%-I %p").rjust(5), font=font16, fill = 0)
+                draw.text((75,offset), str(item['temperature']).rjust(3), font=font16, fill = 0)
+                draw.text((100,offset), str(item['temperatureUnit']), font=font16, fill = 0)
                 # if item['shortForecast'] == "Mostly Sunny" : 
                 #   draw.text((155,offset), "B", font=font_weather_icons, fille=0)
                 # elif item['shortForecast'] == "Mostly Sunny" : 
@@ -260,7 +260,7 @@ def drawFrameBlackWhite(OutsideTemp):
                 hourly = "{}".format(item['shortForecast'])
                 draw.text((145,offset), hourly, font=font_weather, fill = 0)
                 offset = offset+25
-                if hour == 10: 
+                if hour == 12: 
                     break
 
             # offset=75
@@ -326,7 +326,7 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
     offset = START 
     for tide in tidePredictions: 
         # print(tide)
-        prediction = "{} at {}".format(tide['type'],tide['time'])
+        prediction = "{} Tide at {}".format(tide['type'],tide['time'])
         draw.text((410,offset), prediction, font=font18, fill = 0) 
         count = count + 1
         offset = offset+25
@@ -334,18 +334,29 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
             break
 
     offset = offset+5
-    print(WaterTempratures)
+    # print(WaterTempratures)
+    newLine = 0
+    string = "" 
 
-    
+    draw.text((410,offset), "Water Tempratures", font=font18, fill = 0) 
+    offset = offset+25
+    draw.line((400,offset, 800, offset), fill = 0,width = 5 )  # horizontal line 
+    offset = offset+10
+
     for item in WaterTempratures:
-        # start = datetime.strptime(item['t'], '%Y-%m-%d %H:%M')
-        # {'t': '2023-02-23 00:00', 'v': '44.8', 'f': '0,0,0'}
-        # prediction = "{} {} F ".format(item['t'], item['v'])
-        draw.text((410,offset), item, font=font16, fill = 0) 
-        offset = offset+20
-
+        # stringLength = len(item)
+        # print(stringLength)
+        if newLine == 1: 
+            draw.text((610,offset), item, font=font16, fill = 0) 
+            newLine = 0 
+            offset = offset+20
+        else: 
+            draw.text((410,offset), item, font=font16, fill = 0) 
+            newLine = newLine + 1
+        # offset = offset+20
 
     epd.display(epd.getbuffer(Himage)) 
+
     epd.sleep()
 
 
