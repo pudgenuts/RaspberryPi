@@ -11,7 +11,7 @@ rm -rf __MACOSX
 
 mkdir -p /usr/local/share/fonts/
  
-sudo cp -var meteocons-font /usr/local/share/fonts/ 
+sudo cp -var meteocons-font/FONT/Font-face/meteocons* /usr/local/share/fonts/ 
 
 sudo cp -va  ~/git/e-Paper/RaspberryPi_JetsonNano/python/pic/Font.ttc /usr/local/share/fonts/
 
