@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 #!/usr/bin/env python3
-=======
-#!/usr/bin/python
->>>>>>> 08dec7ec0c84d4ace0da2a31868e8959399eec97
 import sys
 import os
 import urllib.request
@@ -69,11 +65,7 @@ global font_day; font_day = ImageFont.truetype('/usr/local/share/fonts/Roboto-Bl
 global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
 global font_day_str; font_day_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 35)
 global font_month_str; font_month_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 25)
-<<<<<<< HEAD
 global font_weather_icons; font_weather_icons = ImageFont.truetype('/usr/local/share/fonts/meteocons-webfont.ttf', 45)
-=======
-global font_weather_icons; font_weather_icons = ImageFont.truetype('/usr/local/share/fonts/meteocons-font/FONT/Font-face/meteocons-webfont.ttf', 45)
->>>>>>> 08dec7ec0c84d4ace0da2a31868e8959399eec97
 global font_tasks_list_title; font_tasks_list_title = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 30)
 
 # these fonts aren't used 
@@ -127,6 +119,8 @@ def fetchWaterTemps(stationID,today,tomorrow):
     # Water tempratues 
     # URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
+    print(URL)
+
     if args.debug is True:
         print(URL) 
     response = requests.get(URL) 
@@ -191,15 +185,12 @@ def fetchNOAAhourly(today):
 
 def fetchNOAAdaily(today): 
     # today = date.today()
-<<<<<<< HEAD
     #  Hilton Head: https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us
     # Baltimore   : https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us
 
     # day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
-    day = query_weather("https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us") 
-=======
+    # day = query_weather("https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us") 
     day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
->>>>>>> 08dec7ec0c84d4ace0da2a31868e8959399eec97
     dayForecast = json.loads(day.read().decode())
 
     return dayForecast
@@ -276,11 +267,10 @@ def drawFrameBlackWhite(OutsideTemp):
                 hourly = "{}".format(item['shortForecast'])
                 draw.text((145,offset), hourly, font=font_weather, fill = 0)
                 offset = offset+25
-<<<<<<< HEAD
-                if hour == 14: 
-=======
+
+                # if hour == 14: 
+
                 if hour == 12: 
->>>>>>> 08dec7ec0c84d4ace0da2a31868e8959399eec97
                     break
 
             # offset=75
@@ -383,7 +373,7 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
 
 
 def main(): 
-<<<<<<< HEAD
+
 # station IDs: 
 	# https://tidesandcurrents.noaa.gov/map/index.html
 	# Baltimore - Fort McHenry 8574680
@@ -392,18 +382,19 @@ def main():
 	# Cape May NJ 8536110
 
     stationID=8574680
-=======
-    stationID=8574680 
->>>>>>> 08dec7ec0c84d4ace0da2a31868e8959399eec97
 
     if args.stationID is not None: 
         stationID = args.stationID
 
 
     TODAY = datetime.now() 
+    updated = ( datetime.now() + timedelta( hours=18 ))
+
     TOMORROW = TODAY + timedelta(1) 
     today= TODAY.strftime("%Y%m%d") 
-    tomorrow = TOMORROW.strftime("%Y%m%d")
+    # tomorrow = TOMORROW.strftime("%Y%m%d")
+    tomorrow = updated.strftime("%Y%m%d")
+    print(tomorrow)
     
     Tides = fetchTides(stationID,today,tomorrow)
     for tidePrediction in Tides: 
