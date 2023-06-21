@@ -123,25 +123,22 @@ def fetchWaterTemps(stationID,today,tomorrow):
 
     if args.debug is True:
         print(URL) 
-    response = requests.get(URL) 
-    json_object = json.loads(response.content) 
-    if args.debug is True: 
-        print("debug:")
-        print(json_object) 
-    for waterTemp in json_object['data']: 
-        start = datetime.strptime(waterTemp['t'],  "%Y-%m-%d %H:%M")
-        # print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
 
-        value = "{} F at {}".format( waterTemp['v'], start.strftime("%-I %p").rjust(5) ) 
-        temps.append(value)
-        # predictionTime = datetime.strptime( waterTemp['t'], '%Y-%m-%d %H:%M') 
-        # DELTA = (predictionTime - datetime.now()) 
-        # if DELTA.total_seconds() > 0: 
-            # value = "{} F at {}".format( waterTemp['v'], waterTemp['t'])
-            # print(value)
-            # temps.append(value)
-            # print(">> {} F at {}".format( waterTemp['v'], waterTemp['t']))
+    try: 
+        response = requests.get(URL) 
+        json_object = json.loads(response.content) 
+        if args.debug is True: 
+            print("debug:") 
+            print(json_object) 
 
+        for waterTemp in json_object['data']: 
+            start = datetime.strptime(waterTemp['t'],  "%Y-%m-%d %H:%M") 
+            # print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast'])) 
+            value = "{} F at {}".format( waterTemp['v'], start.strftime("%-I %p").rjust(5) ) 
+            temps.append(value)
+    except: 
+        temps.append(" No data was found. ")
+            
     return temps
 
 
@@ -209,8 +206,10 @@ def drawFrameBlackWhite(OutsideTemp):
         draw = ImageDraw.Draw(Himage)
 
         now = datetime.now()
-        N = now.strftime("%B %d, %Y  %H:%M")
-        draw.text((15, 20), N , font = font24, fill = 0)
+        N = now.strftime("%B %d, %Y  %H:%M ")
+        draw.text((15, 20), N, font = font24, fill = 0)
+        loc = " Cape May NJ"
+        draw.text((155, 20), loc, font = font24, fill = 0)
         if type(OutsideTemp) is str: 
             currentTemp = "curent temp: unknown"
         else: 
@@ -381,7 +380,8 @@ def main():
 	# Hilton Head Island - Port Royal Plantation - 8669167
 	# Cape May NJ 8536110
 
-    stationID=8574680
+    # stationID=8574680
+    stationID=8536110
 
     if args.stationID is not None: 
         stationID = args.stationID
