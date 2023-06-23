@@ -145,14 +145,34 @@ def fetchWaterTemps(stationID,today,tomorrow):
 def convertC2F(C):
         return ((C * 9/5) +32)
 
-def fetchCurrentTempNetamo():
-    global weather_response
-    authorization = lnetatmo.ClientAuth()
-    print(authorization)
-    weatherData = lnetatmo.WeatherStationData(authorization)
-    outdoorData = weatherData.moduleById('02:00:00:33:d5:56')
-    tempC = outdoorData['dashboard_data']['Temperature']
-    fahrenheit = convertC2F(tempC)
+def fetchCurrentTempNetamo(stationID,today,tomorrow):
+
+    # https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=20230620&end_date=20230621&station=8536110&product=air_temperature&datum=STND&time_zone=lst_ldt&units=english&format=json
+    print("fetchCurrentTempNetamo")
+
+    try: 
+        global weather_response 
+        authorization = lnetatmo.ClientAuth() 
+        print(authorization) 
+        weatherData = lnetatmo.WeatherStationData(authorization) 
+        outdoorData = weatherData.moduleById('02:00:00:33:d5:56') 
+        tempC = outdoorData['dashboard_data']['Temperature'] 
+        fahrenheit = convertC2F(tempC)
+        print("try")
+    except: 
+        print("except")
+        try: 
+            URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
+            print(URL)
+            response = requests.get(URL) 
+            json_object = json.loads(response.content) 
+
+            if args.debug is True: 
+                print("debug:") 
+                print(json_object) 
+ 
+        except: 
+            print("hello")
 
     return fahrenheit
 
@@ -206,15 +226,15 @@ def drawFrameBlackWhite(OutsideTemp):
         draw = ImageDraw.Draw(Himage)
 
         now = datetime.now()
-        N = now.strftime("%B %d, %Y  %H:%M ")
+        N = now.strftime("%B %d, %Y  %H:%M. ")
         draw.text((15, 20), N, font = font24, fill = 0)
         loc = " Cape May NJ"
-        draw.text((155, 20), loc, font = font24, fill = 0)
+        draw.text((255, 20), loc, font = font24, fill = 0)
         if type(OutsideTemp) is str: 
-            currentTemp = "curent temp: unknown"
+            currentTemp = "curent temp Cape May, NJ: unknown"
         else: 
-            currentTemp = "curent temp: {:.2f} F".format(OutsideTemp)
-        draw.text((550, 20), currentTemp , font = font24, fill = 0)
+            currentTemp = "curent temp Cape May NJ: {:.2f} F".format(OutsideTemp)
+        draw.text((450, 20), currentTemp , font = font24, fill = 0)
         
         draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line 
         off = 70
@@ -296,11 +316,11 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
     N = now.strftime("%B %d, %Y  %H:%M") 
     draw.text((15, 20), N , font = font24, fill = 0) 
     if type(OutsideTemp) is str:
-        currentTemp = "curent temp: unknown" 
+        currentTemp = "current temp: unknown" 
     else: 
-        currentTemp = "curent temp: {:.2f} F".format(OutsideTemp) 
+        currentTemp = "current temp: {:.2f} F".format(OutsideTemp) 
 
-    draw.text((550, 20), currentTemp , font = font24, fill = 0) 
+    draw.text((500, 20), currentTemp , font = font24, fill = 0) 
     draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line
 
     off = 70 
@@ -432,6 +452,25 @@ def main():
     try: 
         F = fetchCurrentTempNetamo()
     except:
+        print("except fail") 
+
+        try: 
+            URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
+            print(URL) 
+            response = requests.get(URL) 
+            json_object = json.loads(response.content) 
+            # {'metadata': {'id': '8536110', 'name': 'Cape May', 'lat': '38.9683', 'lon': '-74.9600'}, 'data': [{'t': '2023-06-22 00:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 01:00', 'v': '63.0', 'f': '0,0,0'}, {'t': '2023-06-22 02:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 03:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 04:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 05:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 06:00', 'v': '61.7', 'f': '0,0,0'}, {'t': '2023-06-22 07:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 08:00', 'v': '62.1', 'f': '0,0,0'}, {'t': '2023-06-22 09:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 10:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 11:00', 'v': '63.3', 'f': '0,0,0'}, {'t': '2023-06-22 12:00', 'v': '63.9', 'f': '0,0,0'}, {'t': '2023-06-22 13:00', 'v': '64.9', 'f': '0,0,0'}, {'t': '2023-06-22 14:00', 'v': '65.5', 'f': '0,0,0'}, {'t': '2023-06-22 15:00', 'v': '64.8', 'f': '0,0,0'}, {'t': '2023-06-22 16:00', 'v': '64.2', 'f': '0,0,0'}, {'t': '2023-06-22 17:00', 'v': '63.5', 'f': '0,0,0'}, {'t': '2023-06-22 18:00', 'v': '64.0', 'f': '0,0,0'}]} 
+            for reading in json_object['metadata']: 
+                print("{} {}".format( item['temperature'],item['temperatureUnit']))
+                F = ("{} {}".format( item['temperature'],item['temperatureUnit']))
+
+
+            if args.debug is True: 
+                print("debug:") 
+                print(json_object) 
+        except: 
+            print("hello")
+
         F = "unk"
 
 
