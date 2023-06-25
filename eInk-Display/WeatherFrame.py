@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+# station IDs: 
+	# https://tidesandcurrents.noaa.gov/map/index.html
+	# Baltimore - Fort McHenry 8574680
+	# Savannah - Fort Pulaski 8670870
+	# Hilton Head Island - Port Royal Plantation - 8669167
+	# Cape May NJ 8536110
+
+
 import sys
 import os
 import urllib.request
@@ -19,26 +28,22 @@ import argparse
 # sys.path.insert(1, '/path/to/application/app/folder')
 from waveshare_epd import epd7in5_V2
 
-
-version = "0.1" 
+version = "0.2.01" 
 
 global args 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--stationID')
+parser.add_argument('--stationID', help='stationID to process')
 parser.add_argument('-v', dest='verbose', action='store_true')
 parser.add_argument('-d', dest='debug', action='store_true')
 
 args = parser.parse_args()
-
 
 fontDir = '/usr/local/share/fonts/';
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
 libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
-
-
 
 
 # station IDs: 
@@ -60,10 +65,15 @@ global font36; font36 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 36
 global font24; font24 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 24)
 global font18; font18 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 18)
 global font16; font16 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 16)
+global font14; font14 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 14)
+global font12; font12 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 12)
+global font10; font10 = ImageFont.truetype(os.path.join(fontDir, 'Font.ttc'), 10)
 
 global font_day; font_day = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 110)
-global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
-global font_day_str; font_day_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 35)
+# global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 20)
+global font_weather; font_weather = ImageFont.truetype('/usr/local/share/fonts/Roboto-Black.ttf', 18)
+# global font_day_str; font_day_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 35)
+global font_day_str; font_day_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 28)
 global font_month_str; font_month_str = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 25)
 global font_weather_icons; font_weather_icons = ImageFont.truetype('/usr/local/share/fonts/meteocons-webfont.ttf', 45)
 global font_tasks_list_title; font_tasks_list_title = ImageFont.truetype('/usr/local/share/fonts/Roboto-Light.ttf', 30)
@@ -78,7 +88,6 @@ global icons_list; icons_list = {u'01d':u'B',u'01n':u'C',u'02d':u'H',u'02n':u'I'
 # --------------------
 
 def fetchTides(stationID,today,tomorrow): 
-
     tides = []
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=predictions&datum=STND&time_zone=lst_ldt&interval=hilo&units=english&format=json".format(today,tomorrow,stationID) 
     if args.debug is True: 
@@ -194,7 +203,10 @@ def query_weather(url):
     return response
 
 def fetchNOAAhourly(today): 
-    hourly = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly")
+    # Baltimore
+    # hourly = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly")
+    # Cape May
+    hourly = query_weather("https://api.weather.gov/gridpoints/PHI/65,32/forecast/hourly")
     hourlyForecast = json.loads(hourly.read().decode())
 
     return hourlyForecast
@@ -207,105 +219,16 @@ def fetchNOAAdaily(today):
 
     # day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
     # day = query_weather("https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us") 
-    day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
+    # day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
+    day = query_weather("https://api.weather.gov/gridpoints/PHI/65,32/forecast?units=us")
     dayForecast = json.loads(day.read().decode())
 
     return dayForecast
 
-
-
-def drawFrameBlackWhite(OutsideTemp): 
-    count = 0
-    try:
-        epd = epd7in5_V2.EPD()
-        epd.init()
-        epd.Clear()
-        # Drawing on the Horizontal image
-        logging.info("1.Drawing on the Horizontal image...")
-        Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
-        draw = ImageDraw.Draw(Himage)
-
-        now = datetime.now()
-        N = now.strftime("%B %d, %Y  %H:%M. ")
-        draw.text((15, 20), N, font = font24, fill = 0)
-        loc = " Cape May NJ"
-        draw.text((255, 20), loc, font = font24, fill = 0)
-        if type(OutsideTemp) is str: 
-            currentTemp = "curent temp Cape May, NJ: unknown"
-        else: 
-            currentTemp = "curent temp Cape May NJ: {:.2f} F".format(OutsideTemp)
-        draw.text((450, 20), currentTemp , font = font24, fill = 0)
-        
-        draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line 
-        off = 70
-        for item in dayForecast['properties']['periods']:
-            count = count+1
-            lineNumber = 1
-            forecast = textwrap.wrap(item['detailedForecast'],width=85)
-            for line in forecast:
-                if lineNumber == 1: 
-                    LINE = "{}: {}".format(item['name'],line)
-                    print("%s" % (LINE))
-                    draw.text((0,off), LINE, font=font18, fill = 0)
-                    off = off + 23
-                else:
-                    LINE = "  {}".format(line)
-                    print("%s" % (LINE))
-                    draw.text((0,off), LINE, font=font18, fill = 0)
-                    off = off + 23
-                lineNumber = lineNumber +1
-       	    if count == 2: 
-                break
-            draw.line((0,off, 800, off), fill = 0,width = 5 )  # horizontal line 
-            # draw.line((0, 120, 800, 120), fill = 0,width = 5 )  # horizontal line 
-            # draw.line((350, 120, 350, 600), fill = 0,width = 5 )  # vertical line 
-            draw.line((350, off, 350, 600), fill = 0,width = 5 )  # vertical line 
-            hour = 0
-            offset = off + 5
-            for item in hourlyForecast['properties']['periods']:
-                hour = hour +1
-                # StartTime = datetime.datetime.strptime(item['startTime'])
-                start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
-                # print(start.strftime("%-I %p"))
-                
-                draw.text((10,offset), start.strftime("%-I %p").rjust(5), font=font16, fill = 0)
-                draw.text((75,offset), str(item['temperature']).rjust(3), font=font16, fill = 0)
-                draw.text((100,offset), str(item['temperatureUnit']), font=font16, fill = 0)
-                # if item['shortForecast'] == "Mostly Sunny" : 
-                #   draw.text((155,offset), "B", font=font_weather_icons, fille=0)
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                # elif item['shortForecast'] == "Mostly Sunny" : 
-                
-                # hourly = "{}   {} {}   {} winds {} from the {}".format(start.strftime("%-I %p").rjust(5),str(item['temperature']).rjust(3),item['temperatureUnit'],item['shortForecast'],item['windSpeed'],item['windDirection'])
-                # hourly = "{} winds {} from the {}".format(item['shortForecast'],item['windSpeed'],item['windDirection'])
-                hourly = "{}".format(item['shortForecast'])
-                draw.text((145,offset), hourly, font=font_weather, fill = 0)
-                offset = offset+25
-
-                # if hour == 14: 
-
-                if hour == 12: 
-                    break
-
-            # offset=75
-            # draw.text((10,offset ), ",'&" , font = font_weather_icons , fill = 0)
-            epd.display(epd.getbuffer(Himage))
-            epd.sleep()
-    except IOError as e:
-        logging.info(e)
-    except KeyboardInterrupt:
-        logging.info("ctrl + c:")
-        epd7in5_V2.epdconfig.module_exit()
-
-
 def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures): 
     epd = epd7in5_V2.EPD() 
     print(epd)
+    print(OutsideTemp)
     epd.init() 
     epd.Clear() 
     logging.info("1.Drawing on the Horizontal image...") 
@@ -320,7 +243,7 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
     else: 
         currentTemp = "current temp: {:.2f} F".format(OutsideTemp) 
 
-    draw.text((500, 20), currentTemp , font = font24, fill = 0) 
+    draw.text((500, 20), currentTemp , font = font16, fill = 0) # was font24..... 
     draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line
 
     off = 70 
@@ -382,30 +305,18 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures)
         else: 
             draw.text((410,offset), item, font=font16, fill = 0) 
             newLine = newLine + 1
-        # offset = offset+20
+        # offset = offset+20\]
 
     epd.display(epd.getbuffer(Himage)) 
 
     epd.sleep()
 
-
-
-
 def main(): 
-
-# station IDs: 
-	# https://tidesandcurrents.noaa.gov/map/index.html
-	# Baltimore - Fort McHenry 8574680
-	# Savannah - Fort Pulaski 8670870
-	# Hilton Head Island - Port Royal Plantation - 8669167
-	# Cape May NJ 8536110
-
     # stationID=8574680
     stationID=8536110
 
     if args.stationID is not None: 
         stationID = args.stationID
-
 
     TODAY = datetime.now() 
     updated = ( datetime.now() + timedelta( hours=18 ))
@@ -414,7 +325,8 @@ def main():
     today= TODAY.strftime("%Y%m%d") 
     # tomorrow = TOMORROW.strftime("%Y%m%d")
     tomorrow = updated.strftime("%Y%m%d")
-    print(tomorrow)
+    if args.debug is not None: 
+        print(tomorrow)
     
     Tides = fetchTides(stationID,today,tomorrow)
     for tidePrediction in Tides: 
@@ -452,31 +364,41 @@ def main():
     try: 
         F = fetchCurrentTempNetamo()
     except:
-        print("except fail") 
+        print("except fail fetchCurrentTempNetamo()") 
 
         try: 
             URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
-            print(URL) 
+            print("-- {} ".format(URL) )
             response = requests.get(URL) 
+            print("++ {}".format(response))
             json_object = json.loads(response.content) 
+            print("++ {}".format(json_object['data']))
             # {'metadata': {'id': '8536110', 'name': 'Cape May', 'lat': '38.9683', 'lon': '-74.9600'}, 'data': [{'t': '2023-06-22 00:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 01:00', 'v': '63.0', 'f': '0,0,0'}, {'t': '2023-06-22 02:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 03:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 04:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 05:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 06:00', 'v': '61.7', 'f': '0,0,0'}, {'t': '2023-06-22 07:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 08:00', 'v': '62.1', 'f': '0,0,0'}, {'t': '2023-06-22 09:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 10:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 11:00', 'v': '63.3', 'f': '0,0,0'}, {'t': '2023-06-22 12:00', 'v': '63.9', 'f': '0,0,0'}, {'t': '2023-06-22 13:00', 'v': '64.9', 'f': '0,0,0'}, {'t': '2023-06-22 14:00', 'v': '65.5', 'f': '0,0,0'}, {'t': '2023-06-22 15:00', 'v': '64.8', 'f': '0,0,0'}, {'t': '2023-06-22 16:00', 'v': '64.2', 'f': '0,0,0'}, {'t': '2023-06-22 17:00', 'v': '63.5', 'f': '0,0,0'}, {'t': '2023-06-22 18:00', 'v': '64.0', 'f': '0,0,0'}]} 
-            for reading in json_object['metadata']: 
-                print("{} {}".format( item['temperature'],item['temperatureUnit']))
-                F = ("{} {}".format( item['temperature'],item['temperatureUnit']))
+            for reading in json_object['data']: 
+                print(">> {}".format(reading))
+                print("?? {} F".format( reading['t']))
+                F = reading['v']
 
 
             if args.debug is True: 
-                print("debug:") 
+                print("debug: temp: {}".format(F)) 
                 print(json_object) 
         except: 
-            print("hello")
+            print("hello") 
+            F = "unk"
 
-        F = "unk"
-
-
+ 
+    print("---")
+    print(F)
     drawFrame(F,dayForcast,hours, Tides, waterTempratures)
 
 if __name__ == '__main__': 
+    if args.verbose is True: 
+        print("verbose output: ON")
+    if args.debug is True:
+        print("debug mode: ON")
+        if args.stationID is not None: 
+            print("stationID set to: {}".format(args.stationID))
     main() 
     # print("\n") 
     exit(); 
