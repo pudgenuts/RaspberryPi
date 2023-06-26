@@ -16,7 +16,6 @@ import logging
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
-# from textwrap import fill
 import textwrap
 import lnetatmo
 
@@ -128,8 +127,6 @@ def fetchWaterTemps(stationID,today,tomorrow):
     # Water tempratues 
     # URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
     URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=water_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
-    print(URL)
-
     if args.debug is True:
         print(URL) 
 
@@ -142,7 +139,6 @@ def fetchWaterTemps(stationID,today,tomorrow):
 
         for waterTemp in json_object['data']: 
             start = datetime.strptime(waterTemp['t'],  "%Y-%m-%d %H:%M") 
-            # print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast'])) 
             value = "{} F at {}".format( waterTemp['v'], start.strftime("%-I %p").rjust(5) ) 
             temps.append(value)
     except: 
@@ -169,20 +165,9 @@ def fetchCurrentTempNetamo(stationID,today,tomorrow):
         fahrenheit = convertC2F(tempC)
         print("try")
     except: 
-        print("except")
-        try: 
-            URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID)
-            print(URL)
-            response = requests.get(URL) 
-            json_object = json.loads(response.content) 
-
-            if args.debug is True: 
-                print("debug:") 
-                print(json_object) 
- 
-        except: 
-            print("hello")
-
+        if args.debug is not None:
+            print("except")
+        F = "unknown"
     return fahrenheit
 
 def query_weather(url):
@@ -192,9 +177,7 @@ def query_weather(url):
         print('-= Ping Weather API =- %s' %(url))
     while True:
         try:
-            # response = requests.get(url).json()
             response = urllib.request.urlopen(url)
-            # print(response)
             break
         except:
             print('-= Weather API JSON Failed - Will Try Again =-')
@@ -400,9 +383,12 @@ if __name__ == '__main__':
         if args.stationID is not None: 
             print("stationID set to: {}".format(args.stationID))
     main() 
-    # print("\n") 
-    exit(); 
+    print("\n") 
+    # new_noaa = NOAA(obtained_token)
+    # ans = requests.get('https://www.ncei.noaa.gov/cdo-web/api/v2/stations?limit=100', headers={'token': 'pCOcMqTnRPOjkFtkBjKHNdKyplVPRwfy'})
+    # print(ans.content)
 
+    exit(); 
 
 
 
@@ -414,4 +400,10 @@ if __name__ == '__main__':
 # L => fog + clouds # M => FOG # N => cloud # O => cloud + lightning # P => cloud + lightning
 # Q => drizzle # R => rain # S => windy  + cloud # T => windy + cloud + rain  # U => snow # V => snow # W => heavy snow 
 # X => hail # Y => clody # Z => clouds + lightning
+
+
+# to geocode an address 
+# https://geocoding.geo.census.gov/geocoder/locations/address?street=4600+Silver+Hill+Rd&city=Washington&state=DC&benchmark=2020&format=json
+
+# https://geocoding.geo.census.gov/geocoder/locations/address?street=411+Washington+St&City=Cape+May&atate=NJ&zip=08204&benchmark=2020&format=json
 
