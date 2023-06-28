@@ -115,19 +115,18 @@ if __name__ == '__main__':
         print("verbose output: ON")
     if args.debug is True:
         print("debug mode: ON")
-    # currentObservation = "https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=21211&distance=25&API_KEY=65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
+    # currentObservation = "https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=21211&distance=25&API_KEY={}"
     # current  = requests.get(currentObservation)
     # JSONreturned  = json.loads(current.content)
     # print(JSONreturned)
 
-    # forecastURL = "https://www.airnowapi.org/aq/forecast/zipCode/?format=application/json&zipCode=21211&date=2023-06-28&distance=25&API_KEY=65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
+    # forecastURL = "https://www.airnowapi.org/aq/forecast/zipCode/?format=application/json&zipCode=21211&date=2023-06-28&distance=25&API_KEY={}"
     # forecast = requests.get(forecastURL)
     # JSONreturned  = json.loads(current.content)
     # print(JSONreturned)
 
 
-    currentByLongLatURL = "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=38.956&longitude=-74.852&distance=50&API_KEY=65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
-    
+    currentByLongLatURL = "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=38.956&longitude=-74.852&distance=50&API_KEY={}"
     currentByLongLat = requests.get(currentByLongLatURL)
     JSONreturned  = json.loads(currentByLongLat.content)
     for data in JSONreturned:
