@@ -21,7 +21,7 @@ import argparse
 from waveshare_epd import epd7in5_V2
 
 version = "0.1" 
-APIKEY = "65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
+global APIKEY 
 
 global args 
 
