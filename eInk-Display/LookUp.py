@@ -124,9 +124,9 @@ def lookupAddress(street,city,state,zip):
         fileOUT.write("forecastHourly URL: {}\n".format(hourlyForecastURL) )
         fileOUT.write("county: {}\n".format(countyDataJSON['properties']['name']) )
 
-        APIKEY = "65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
+
         fileOUT.write("AQI URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=50&API_KEY={}\n"
-            .format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']),APIKEY ))
+            .format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']),args.apiKey))
         
         fileOUT.write("\n\n")
         fileOUT.write("")
