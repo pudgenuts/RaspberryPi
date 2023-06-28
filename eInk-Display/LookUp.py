@@ -6,13 +6,13 @@ import urllib.request
 
 import logging
 import time
-from PIL import Image,ImageDraw,ImageFont
-import traceback
-import textwrap
+# from PIL import Image,ImageDraw,ImageFont
+# import traceback
+# import textwrap
 import lnetatmo
 
 import requests
-import json 
+import json     
 
 from datetime import date, timedelta, datetime
 import argparse 
@@ -32,6 +32,7 @@ parser.add_argument('--zip', help='insert help here')
 parser.add_argument('--long', help='insert help here')
 parser.add_argument('--lat', help='insert help here')
 parser.add_argument('--token', help='insert help here')
+parser.add_argument('--overwrite', help='add help here')
 parser.add_argument('-v', dest='verbose', action='store_true')
 parser.add_argument('-d', dest='debug', action='store_true')
 
@@ -63,40 +64,103 @@ def lookupAddress(street,city,state,zip):
     jsonResponse = json.loads(response.content) 
 
     try:
+        
         for match in jsonResponse['result']['addressMatches']:
+            fileOUT = open("frame.config",'w+')
+            fileOUT.write( "matched adress: {}\n".format(match['matchedAddress']))
+            fileOUT.write( "coordinates: {}/{}\n".format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']) ))
+            fileOUT.flush()
+                                                         
             if args.verbose is True:
                 print("\tmatched adress {}".format(match['matchedAddress']))
                 print("\tcoordinates: {}".format(match['coordinates']))
+            
 
+        # fetch other URLs for this LAT / LONG 
         URL = "https://api.weather.gov/points/{},{}".format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']))
+        responseJSON = json.loads(response.content)
+
         if args.debug is True: 
             print("\t>>{}".format(URL))
         response = requests.get(URL) 
+        
         if args.debug is True:
             print("++ {}".format(response))
-        ResponseJSON = json.loads(response.content) 
+
+        responseJSON = json.loads(response.content) 
 
         if args.debug is True:
-            print("\t{}".format(ResponseJSON['properties']))
+            print("\tdebug: {}".format(responseJSON['properties']))
+
+        forcastOfficeURL = responseJSON['properties']['forecastOffice']
+        forecastURL = responseJSON['properties']['forecast']
+        hourlyForecastURL = responseJSON['properties']['forecastHourly']
+
+        forecastZoneURL = responseJSON['properties']['forecastZone']
+        forecastZone = requests.get(forecastZoneURL)
+        forecastZoneJSON = json.loads(forecastZone.content)
+
+        forecastOfficeURL = responseJSON['properties']['forecastOffice']
+        forecastOffice = requests.get(forecastOfficeURL)
+        forecastOfficeJSON = json.loads(forecastOffice.content)
+
+        radarStation = responseJSON['properties']['radarStation']
+        fireWeatherZoneURL = responseJSON['properties']['fireWeatherZone']
+        countyURL = responseJSON['properties']['county']
+        countyData = requests.get(countyURL)
+        countyDataJSON = json.loads(countyData.content) 
+        # print(countyDataJSON)
+
+        timeZone = responseJSON['properties']['county']
+
+        observationStations = requests.get(responseJSON['properties']['observationStations'])
+        observationStationsJSON = json.loads(observationStations.content)
+        # fileOUT = open("frame.config",'w+')
+        fileOUT.write("forecastOfficeURL: {}\n".format(forecastOfficeURL))
+        fileOUT.write("forecastOffice: {}\n".format(forecastOfficeJSON['name']))
+        fileOUT.write("forecastZoneURL: {}\n".format(forecastZoneURL))
+        fileOUT.write("forecastZone Name: {}\n".format(forecastZoneJSON['properties']['name']))
+        fileOUT.write("forecast URL: {}\n".format(forecastURL))
+        fileOUT.write("forecastHourly URL: {}\n".format(hourlyForecastURL) )
+        fileOUT.write("county: {}\n".format(countyDataJSON['properties']['name']) )
+
+        APIKEY = "65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97"
+        fileOUT.write("AQI URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=50&API_KEY={}\n"
+            .format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']),APIKEY ))
+        
+        fileOUT.write("\n\n")
+        fileOUT.write("")
+        fileOUT.write("")
+        fileOUT.write("")
+        fileOUT.write("")
+        fileOUT.write("")
+        fileOUT.write("")
+        fileOUT.flush()
+        fileOUT.close()
+
+
+
 
         if args.verbose is True:
+            print()
 
-            print("\tforecastOffice URL: {}".format(ResponseJSON['properties']['forecastOffice']))
-            print("\tforecastHourly URL: {}".format(ResponseJSON['properties']['forecastHourly']))
-            print("\tforecastZone URL: {}".format(ResponseJSON['properties']['forecastZone']))
-            forecastZone = requests.get(ResponseJSON['properties']['forecastZone'])
-            zoneJSON = json.loads(forecastZone.content)
-            # print(zoneJSON['properties']['name'])
-            print("\tforecastZone: {} ({})".format(zoneJSON['properties']['name'],ResponseJSON['properties']['forecastZone']))
-            print("\tradarStation: {}".format(ResponseJSON['properties']['radarStation']))
-
-            print("\tobservationStations URL: {}".format(ResponseJSON['properties']['observationStations']))
-            # observationStations = requests.get("https://api.weather.gov/gridpoints/LWX/109,91/stations")
-            observationStations = requests.get(ResponseJSON['properties']['observationStations'])
-            observationJSON = json.loads(observationStations.content)
-            print("\tObervation Stations")
-            for feature in observationJSON['features']:
+            print("\tforecastOffice: {} ({})".format(forecastOfficeJSON['name'],forecastOfficeURL))
+            print("\tforecastZone: {} ({})".format(forecastZoneJSON['properties']['name'],forecastZoneURL ))
+            print("\tforecastHourly URL: {}".format(hourlyForecastURL))
+            print("\tobservationStations URL: {}".format(responseJSON['properties']['observationStations'] ))
+            for feature in observationStationsJSON['features']:
                 print("\t\t{}".format(feature['properties']['name']))
+
+
+
+            # print("\tforecastZone: {} ({})".format(zoneJSON['properties']['name'],ResponseJSON['properties']['forecastZone']))
+            # print("\tradarStation: {}".format(ResponseJSON['properties']['radarStation']))
+
+            
+            # # observationStations = requests.get("https://api.weather.gov/gridpoints/LWX/109,91/stations")
+            # observationStations = requests.get(ResponseJSON['properties']['observationStations'])
+            # observationJSON = json.loads(observationStations.content)
+            # print("\tObervation Stations")
 
     except: 
         print("except error")
@@ -107,7 +171,7 @@ def lookupAddress(street,city,state,zip):
 
 def main(): 
     print("main")
-    lookupAddress(args.street,args.city,args.state,args.zip)
+    sucess = lookupAddress(args.street,args.city,args.state,args.zip)
 
 if __name__ == '__main__': 
     if args.verbose is True: 
