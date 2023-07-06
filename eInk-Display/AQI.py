@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # print(JSONreturned)
 
 
-    currentByLongLatURL = "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=38.956&longitude=-74.852&distance=50&API_KEY={}"
+    currentByLongLatURL = "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=38.956&longitude=-74.852&distance=50&API_KEY={}".format(args.apikey)
     currentByLongLat = requests.get(currentByLongLatURL)
     JSONreturned  = json.loads(currentByLongLat.content)
     for data in JSONreturned:
