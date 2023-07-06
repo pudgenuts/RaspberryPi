@@ -3,17 +3,10 @@
 import sys
 import os
 import urllib.request
-
-import logging
+# import logging
 import time
-# from PIL import Image,ImageDraw,ImageFont
-# import traceback
-# import textwrap
-import lnetatmo
-
 import requests
 import json     
-
 from datetime import date, timedelta, datetime
 import argparse 
 
@@ -33,6 +26,8 @@ parser.add_argument('--long', help='insert help here')
 parser.add_argument('--lat', help='insert help here')
 parser.add_argument('--token', help='insert help here')
 parser.add_argument('--overwrite', help='add help here')
+parser.add_argument('--apiKey')
+parser.add_argument('--stationID')
 parser.add_argument('-v', dest='verbose', action='store_true')
 parser.add_argument('-d', dest='debug', action='store_true')
 
@@ -48,6 +43,7 @@ if os.path.exists(libdir):
 def lookupAddress(street,city,state,zip):
     print("lookupAddress")
 
+
     arguements = ["format=json", "benchmark=2020"]
     if street is not None: 
         arguements.append("street={}".format(street.replace(" ","+")))
@@ -60,6 +56,8 @@ def lookupAddress(street,city,state,zip):
     arguementStrinfg="&".join(arguements)
     
     URL = "https://geocoding.geo.census.gov/geocoder/locations/address?{}".format("&".join(arguements))
+    if args.debug is True: 
+        print(URL)
     response = requests.get(URL) 
     jsonResponse = json.loads(response.content) 
 
@@ -72,6 +70,8 @@ def lookupAddress(street,city,state,zip):
             fileOUT.flush()
                                                          
             if args.verbose is True:
+                print(match)
+                print()
                 print("\tmatched adress {}".format(match['matchedAddress']))
                 print("\tcoordinates: {}".format(match['coordinates']))
             
@@ -119,26 +119,30 @@ def lookupAddress(street,city,state,zip):
         fileOUT.write("forecastOfficeURL: {}\n".format(forecastOfficeURL))
         fileOUT.write("forecastOffice: {}\n".format(forecastOfficeJSON['name']))
         fileOUT.write("forecastZoneURL: {}\n".format(forecastZoneURL))
-        fileOUT.write("forecastZone Name: {}\n".format(forecastZoneJSON['properties']['name']))
-        fileOUT.write("forecast URL: {}\n".format(forecastURL))
-        fileOUT.write("forecastHourly URL: {}\n".format(hourlyForecastURL) )
+        fileOUT.write("forecastZoneName: {}\n".format(forecastZoneJSON['properties']['name']))
+        fileOUT.write("forecastURL: {}\n".format(forecastURL))
+        fileOUT.write("forecastHourlyURL: {}\n".format(hourlyForecastURL) )
         fileOUT.write("county: {}\n".format(countyDataJSON['properties']['name']) )
+        fileOUT.write("countyID: {}\n".format(countyDataJSON['properties']['id']) )
+        fileOUT.write("countyURL: {}\n".format(responseJSON['properties']['county']) )
+        fileOUT.write("alertsURL: https://api.weather.gov/alerts/active?area={}\n".format(match['addressComponents']['state']) )
+
+        # https://api.weather.gov/alerts/active?area=MD
 
 
-        fileOUT.write("AQI URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=50&API_KEY={}\n"
-            .format("{:.3f}".format(match['coordinates']['y']) ,"{:.3f}".format(match['coordinates']['x']),args.apiKey))
+        if args.apiKey is not None: 
+            fileOUT.write("AQI_URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=50&API_KEY={}\n"
+                          .format("{:.4f}".format(match['coordinates']['y']) ,"{:.4f}".format(match['coordinates']['x']),args.apiKey))
         
-        fileOUT.write("\n\n")
-        fileOUT.write("")
-        fileOUT.write("")
-        fileOUT.write("")
-        fileOUT.write("")
-        fileOUT.write("")
-        fileOUT.write("")
+        # fileOUT.write("\n\n")
+        # fileOUT.write("")
+        # fileOUT.write("")
+        # fileOUT.write("")
+        # fileOUT.write("")
+        # fileOUT.write("")
+        # fileOUT.write("")
         fileOUT.flush()
         fileOUT.close()
-
-
 
 
         if args.verbose is True:
