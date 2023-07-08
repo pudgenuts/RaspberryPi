@@ -24,12 +24,17 @@ import json
 from datetime import date, timedelta, datetime
 import argparse 
 
+import hashlib
+
+
 # sys.path.insert(1, '/path/to/application/app/folder')
 from waveshare_epd import epd7in5_V2
 
 version = "0.2.01" 
 
+global CONFIG 
 global args 
+global PreviousData
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config')
@@ -39,8 +44,8 @@ parser.add_argument('-d', dest='debug', action='store_true')
 
 args = parser.parse_args()
 
-global CONFIG 
 CONFIG = {} 
+PreviousData = {} 
 
 fontDir = '/usr/local/share/fonts/';
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
@@ -76,8 +81,25 @@ global font_tasks_list_title; font_tasks_list_title = ImageFont.truetype('/usr/l
 
 global icons_list; icons_list = {u'01d':u'B',u'01n':u'C',u'02d':u'H',u'02n':u'I',u'03d':u'N',u'03n':u'N',u'04d':u'Y',u'04n':u'Y',u'09d':u'R',u'09n':u'R',u'10d':u'R',u'10n':u'R',u'11d':u'P',u'11n':u'P',u'13d':u'W',u'13n':u'W',u'50d':u'M',u'50n':u'W'}
 
-# --------------------
 
+
+# --------------------------------------------------------------------------------
+def fetchNOAAdaily(today): 
+    day = query_weather(CONFIG['forecastURL'])
+    forecast = json.loads(day.read().decode())
+    
+    dayForcast = []
+    for item in forecast['properties']['periods']:
+        dayForcast.append("{}: {}".format(item['name'],item['detailedForecast']))
+        if args.debug is True:
+            print("debug> {}".format(item))
+        if item['number'] == 2: 
+            break
+
+    return dayForcast
+# --------------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------
 def processConfigFile(file):
     fileIN = open(file,"r")
     for line in fileIN: 
@@ -89,9 +111,10 @@ def processConfigFile(file):
                 print("{} => {}".format(lineData[0], lineData[1]) )
     
     if args.verbose is True: 
-        print(CONFIG)
+        print("config file {}".format(file))
         for key, value in CONFIG.items():
             print("{} => {}".format(key,value))
+# --------------------------------------------------------------------------------
 
 def fetchActiveAlerts(): 
 
@@ -167,7 +190,8 @@ def fetchWaterTemps(stationID,today,tomorrow):
 
 
 def convertC2F(C):
-        return ((C * 9/5) +32)
+        value = float( ((C * 9/5) +32) )
+        return value
 
 def fetchCurrentTempNetamo(stationID,today,tomorrow):
 
@@ -212,13 +236,25 @@ def fetchNOAAhourly(today):
         if args.debug is True: 
             print("using URL: {} for hourly forecast".format(CONFIG['forecastHourlyURL']))
         URL =  CONFIG['forecastHourlyURL']
-    else:
-        URL = "https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly"
 
     hourly = query_weather(URL)
     hourlyForecast = json.loads(hourly.read().decode())
 
-    return hourlyForecast
+    hours = [] 
+    for item in hourlyForecast['properties']['periods']: 
+        # {'number': 10, 'name': '', 'startTime': '2023-02-22T06:00:00-05:00', 'endTime': '2023-02-22T07:00:00-05:00', 'isDaytime': True, 'temperature': 36, 'temperatureUnit': 'F', 'temperatureTrend': None, 'probabilityOfPrecipitation': {'unitCode': 'wmoUnit:percent', 'value': 2}, 'dewpoint': {'unitCode': 'wmoUnit:degC', 'value': -3.888888888888889}, 'relativeHumidity': {'unitCode': 'wmoUnit:percent', 'value': 64}, 'windSpeed': '5 mph', 'windDirection': 'NE', 'icon': 'https://api.weather.gov/icons/land/day/bkn,2?size=small', 'shortForecast': 'Mostly Cloudy', 'detailedForecast': ''}
+        start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
+        if args.verbose is True: 
+            print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
+        hours.append("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
+        # print("\tdew point{}".format(item['dewpoint']['value']))
+        # print()
+        if item['number'] == 16: 
+            break
+
+
+
+    return hours
 
 def fetchAQI(): 
 
@@ -247,18 +283,25 @@ def fetchAQI():
 
     return JSONreturned
 
-def fetchNOAAdaily(today): 
-    # today = date.today()
-    #  Hilton Head: https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us
-    # Baltimore   : https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us
+def fetchLocalTemprature(): 
 
-    # day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
-    # day = query_weather("https://api.weather.gov/gridpoints/CHS/59,46/forecast?units=us") 
-    # day = query_weather("https://api.weather.gov/gridpoints/LWX/107,91/forecast?units=us")
-    day = query_weather("https://api.weather.gov/gridpoints/PHI/65,32/forecast?units=us")
-    dayForecast = json.loads(day.read().decode())
+    F = "unk"
+    try: 
+        F = fetchCurrentTempNetamo()
+    except:
+        if args.debug is True: 
+            print("except fail fetchCurrentTempNetamo()") 
+        try:
+            # URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
+            response = requests.get(CONFIG['nearestObservationSationURL'] +'/observations')
+            json_object = json.loads(response.content) 
+            for observation in json_object['features']:
+                F = convertC2F(observation['properties']['temperature']['value'])
+                break
+        except: 
+            F = "unk"
 
-    return dayForecast
+    return F
 
 def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures, aqi, alerts):
 
@@ -399,90 +442,35 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
             # offset = offset+20\]
 
     epd.display(epd.getbuffer(Himage)) 
-
     epd.sleep()
 
 def main(): 
-    # stationID=8574680
-    stationID=8536110
 
+    stationID=8574680
     if args.stationID is not None: 
         stationID = args.stationID
+    # elif CONFIG['stationID']  is not None:
+    #     stationID = CONFIG['stationID']
 
-    TODAY = datetime.now() 
+    today= datetime.now().strftime("%Y%m%d") 
     updated = ( datetime.now() + timedelta( hours=18 ))
-
-    TOMORROW = TODAY + timedelta(1) 
-    today= TODAY.strftime("%Y%m%d") 
-    # tomorrow = TOMORROW.strftime("%Y%m%d")
     tomorrow = updated.strftime("%Y%m%d")
-    if args.debug is True: 
-        print(tomorrow)
-    
-    Tides = fetchTides(stationID,today,tomorrow)
-    if args.debug is True: 
-        for tidePrediction in Tides: 
-            print(tidePrediction)
 
+    if args.debug is True: 
+        print("today: {}".format(today))
+        print("today: {}".format(updated))
+        print("today: {}".format(tomorrow))
+    
+    # todayForecast = fetchNOAAdaily(today)
+    dayForcast = fetchNOAAdaily(today) # validated
+    hourlyForecast = fetchNOAAhourly(today) # validated 
+    tidePredictions = fetchTides(stationID,today,tomorrow)
     waterTempratures = fetchWaterTemps(stationID,today,tomorrow) 
-    # print(waterTempratures)
+    currentAQI = fetchAQI()
+    currentWeatherAlerts = fetchActiveAlerts()
+    localTemprature = fetchLocalTemprature()
 
-    day = fetchNOAAdaily(today)
-
-    dayForcast = []
-    for item in day['properties']['periods']:
-        dayForcast.append("{}: {}".format(item['name'],item['detailedForecast']))
-        if args.debug is True:
-            print(item)
-        if item['number'] == 2: 
-            break
-
-    hourly = fetchNOAAhourly(today)
-    hours = [] 
-    for item in hourly['properties']['periods']: 
-        # {'number': 10, 'name': '', 'startTime': '2023-02-22T06:00:00-05:00', 'endTime': '2023-02-22T07:00:00-05:00', 'isDaytime': True, 'temperature': 36, 'temperatureUnit': 'F', 'temperatureTrend': None, 'probabilityOfPrecipitation': {'unitCode': 'wmoUnit:percent', 'value': 2}, 'dewpoint': {'unitCode': 'wmoUnit:degC', 'value': -3.888888888888889}, 'relativeHumidity': {'unitCode': 'wmoUnit:percent', 'value': 64}, 'windSpeed': '5 mph', 'windDirection': 'NE', 'icon': 'https://api.weather.gov/icons/land/day/bkn,2?size=small', 'shortForecast': 'Mostly Cloudy', 'detailedForecast': ''}
-        start = datetime.strptime(item['startTime'].replace("T", " ",1) ,  "%Y-%m-%d %H:%M:%S%z")
-        if args.verbose is True: 
-            print("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
-        hours.append("{} {} {} / {}% -- {}".format(start.strftime("%-I %p").rjust(5), item['temperature'],item['temperatureUnit'], item['relativeHumidity']['value'],item['shortForecast']))
-        # print("\tdew point{}".format(item['dewpoint']['value']))
-        # print()
-        if item['number'] == 16: 
-            break
-    
-    aqi = fetchAQI()
-    alerts = fetchActiveAlerts()
-
-
-    try: 
-        F = fetchCurrentTempNetamo()
-    except:
-        if args.debug is True: 
-            print("except fail fetchCurrentTempNetamo()") 
-
-        try: 
-            URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date={}&end_date={}&station={}&product=air_temperature&datum=STND&time_zone=lst_ldt&interval=h&units=english&format=json".format(today,tomorrow,stationID) 
-            response = requests.get(URL)
-            json_object = json.loads(response.content) 
-            
-            # {'metadata': {'id': '8536110', 'name': 'Cape May', 'lat': '38.9683', 'lon': '-74.9600'}, 'data': [{'t': '2023-06-22 00:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 01:00', 'v': '63.0', 'f': '0,0,0'}, {'t': '2023-06-22 02:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 03:00', 'v': '63.1', 'f': '0,0,0'}, {'t': '2023-06-22 04:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 05:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 06:00', 'v': '61.7', 'f': '0,0,0'}, {'t': '2023-06-22 07:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 08:00', 'v': '62.1', 'f': '0,0,0'}, {'t': '2023-06-22 09:00', 'v': '62.2', 'f': '0,0,0'}, {'t': '2023-06-22 10:00', 'v': '62.4', 'f': '0,0,0'}, {'t': '2023-06-22 11:00', 'v': '63.3', 'f': '0,0,0'}, {'t': '2023-06-22 12:00', 'v': '63.9', 'f': '0,0,0'}, {'t': '2023-06-22 13:00', 'v': '64.9', 'f': '0,0,0'}, {'t': '2023-06-22 14:00', 'v': '65.5', 'f': '0,0,0'}, {'t': '2023-06-22 15:00', 'v': '64.8', 'f': '0,0,0'}, {'t': '2023-06-22 16:00', 'v': '64.2', 'f': '0,0,0'}, {'t': '2023-06-22 17:00', 'v': '63.5', 'f': '0,0,0'}, {'t': '2023-06-22 18:00', 'v': '64.0', 'f': '0,0,0'}]} 
-            for reading in json_object['data']: 
-                if args.verbose is True: 
-                    # print(">> {}".format(reading))
-                    print("?? {} F".format( reading['v']))
-                F = float(reading['v'])
-
-
-            if args.debug is True: 
-                print("debug: temp: {}".format(F)) 
-                print(json_object) 
-            if args.verbose is True: 
-                print("setting F to {} ".format(F))
-        except: 
-            print("hello") 
-            F = "unk"
-
-    drawFrame(F,dayForcast,hours, Tides, waterTempratures,aqi,alerts)
+    drawFrame(localTemprature,dayForcast,hourlyForecast, tidePredictions, waterTempratures,currentAQI,currentWeatherAlerts)
 
 if __name__ == '__main__': 
     if args.verbose is True: 
