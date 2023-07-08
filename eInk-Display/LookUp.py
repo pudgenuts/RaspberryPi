@@ -82,6 +82,7 @@ def lookupAddress(street,city,state,zip):
 
         if args.debug is True: 
             print("\t>>{}".format(URL))
+
         response = requests.get(URL) 
         
         if args.debug is True:
@@ -125,6 +126,15 @@ def lookupAddress(street,city,state,zip):
         fileOUT.write("county: {}\n".format(countyDataJSON['properties']['name']) )
         fileOUT.write("countyID: {}\n".format(countyDataJSON['properties']['id']) )
         fileOUT.write("countyURL: {}\n".format(responseJSON['properties']['county']) )
+        fileOUT.write("observationStationsURL {}\n".format(responseJSON['properties']['observationStations']) )
+
+        for feature in observationStationsJSON['features']:
+            fileOUT.write("nearestObservationSationName: {}\n".format(feature['properties']['name']) )
+            fileOUT.write("nearestObservationSationID: {}\n".format(feature['properties']['stationIdentifier']) )
+            fileOUT.write("nearestObservationSationURL: {}\n".format(feature['id']) )
+            break
+
+
         fileOUT.write("alertsURL: https://api.weather.gov/alerts/active?area={}\n".format(match['addressComponents']['state']) )
 
         # https://api.weather.gov/alerts/active?area=MD
@@ -154,6 +164,7 @@ def lookupAddress(street,city,state,zip):
             print("\tobservationStations URL: {}".format(responseJSON['properties']['observationStations'] ))
             for feature in observationStationsJSON['features']:
                 print("\t\t{}".format(feature['properties']['name']))
+                print("\t\t\t{}".format(feature['properties']['stationIdentifier']))
 
 
 
