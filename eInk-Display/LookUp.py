@@ -137,13 +137,14 @@ def lookupAddress(street,city,state,zip):
 
         fileOUT.write("alertsURL: https://api.weather.gov/alerts/active?area={}\n".format(match['addressComponents']['state']) )
 
-        # https://api.weather.gov/alerts/active?area=MD
-
-
         if args.apiKey is not None: 
-            fileOUT.write("AQI_URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=50&API_KEY={}\n"
+            DATE = datetime.now().strftime("%Y-%m-%d") 
+            fileOUT.write("AQI_URL: https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude={}&longitude={}&distance=25&API_KEY={}\n"
                           .format("{:.4f}".format(match['coordinates']['y']) ,"{:.4f}".format(match['coordinates']['x']),args.apiKey))
-        
+            fileOUT.write("forecastAQI_URL: https://www.airnowapi.org/aq/forecast/latLong/?format=application/json&latitude={}&longitude={}&date={}&distance=25&API_KEY={}\n"
+                          .format("{:.4f}".format(match['coordinates']['y']) ,"{:.4f}".format(match['coordinates']['x']),DATE,args.apiKey))
+
+
         # fileOUT.write("\n\n")
         # fileOUT.write("")
         # fileOUT.write("")

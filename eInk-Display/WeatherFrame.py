@@ -7,6 +7,8 @@
 	# Hilton Head Island - Port Royal Plantation - 8669167
 	# Cape May NJ 8536110
 # draw.text((X ,Y), "text", font = font14, fill = 0)
+# AQI forecast 
+# https://www.airnowapi.org/aq/forecast/latLong/?format=application/json&latitude=39.3303&longitude=-76.6312&date=2023-07-13&distance=25&API_KEY=65EC2E3C-C5A4-41D9-A1FB-3D7CAADC3B97
 
 import sys
 import os
@@ -45,7 +47,15 @@ parser.add_argument('-d', dest='debug', action='store_true')
 args = parser.parse_args()
 
 CONFIG = {} 
-PreviousData = {} 
+PreviousData = {
+'dayForcast': "0",
+'hourlyForecast': "0",
+'tidePredictions': "0",
+'waterTempratures': "0",
+'currentAQI': "0",
+'currentWeatherAlerts': "0",
+'localTemprature': "0"
+} 
 
 fontDir = '/usr/local/share/fonts/';
 picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
@@ -96,7 +106,18 @@ def fetchNOAAdaily(today):
         if item['number'] == 2: 
             break
 
-    return dayForcast
+
+    forecastString = str(dayForcast)
+    HASH = hashlib.md5(forecastString.encode('utf-8')).hexdigest()
+    print("new md5hash for dayForecast: {}".format(HASH))
+    print("old md5hash for dayForecast: {}".format(PreviousData['dayForcast']))
+    
+    if hash != PreviousData['dayForcast']: 
+        updateDisplay = True
+        PreviousData['dayForcast'] = HASH
+
+
+    return dayForcast,HASH
 # --------------------------------------------------------------------------------
 
 # --------------------------------------------------------------------------------
@@ -121,7 +142,7 @@ def fetchActiveAlerts():
     alerts = {'headline': 'no active alerts'}
     response = requests.get(CONFIG['alertsURL']) 
     json_object = json.loads(response.content) 
-    # print(json_object)
+
     for activeAlert in json_object['features']: 
         for zone in activeAlert['properties']['affectedZones']:
             if CONFIG['countyURL'] == zone: 
@@ -131,7 +152,12 @@ def fetchActiveAlerts():
                 alerts['onset'] = activeAlert['properties']['onset']
                 alerts['expires'] =  activeAlert['properties']['expires']
 
-    return alerts
+    alertsString = str(alerts)
+    HASH = hashlib.md5(alertsString.encode('utf-8')).hexdigest()
+    # print("dayForcast type is {}".format(type(dayForcast)))
+
+
+    return alerts,HASH
 
 
 def fetchTides(stationID,today,tomorrow): 
@@ -283,6 +309,46 @@ def fetchAQI():
 
     return JSONreturned
 
+def fetchAQIforecast(): 
+
+    if CONFIG['AQI_URL'] is not None: 
+        URL =  CONFIG['forecastAQI_URL']
+    else:
+        URL = "https://api.weather.gov/gridpoints/LWX/107,91/forecast/hourly"
+
+    try: 
+        # print(URL)
+        AQI = requests.get(URL)
+        if len(AQI.content) > 10: 
+            JSONreturned = json.loads(AQI.content)
+        else:
+            JSONreturned = { "error": "no content in response to AQI request"}
+
+    except: 
+        JSONreturned = { "error", AQI}
+
+    if args.debug is True: 
+        # = datetime.now().strftime("%Y%m%d") 
+        TOMORROW = ( datetime.now() + timedelta( hours=24 )).strftime("%Y-%m-%d") 
+        DAYAFTER = ( datetime.now() + timedelta( hours=45 )).strftime("%Y-%m-%d") 
+        # print("tomorrow: {}".format(updated))
+
+        
+        print(type(JSONreturned))
+        # print(JSONreturned)
+        for item in JSONreturned: 
+            if item['DateForecast'].strip() == TOMORROW or item['DateForecast'].strip() == DAYAFTER: 
+                if item['DateForecast'].strip() == TOMORROW: 
+                    print(item)
+                print("\t---")
+                print("{} / {} / {} - {}".format(item['DateForecast'], item['ParameterName'], item['AQI'],item['Category']['Name']) )
+                print("\t---")
+
+            print("\t---")
+            
+
+    return JSONreturned
+
 def fetchLocalTemprature(): 
 
     F = "unk"
@@ -303,7 +369,7 @@ def fetchLocalTemprature():
 
     return F
 
-def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures, aqi, alerts):
+def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures, aqi, alerts, AQIforecast):
 
     now = datetime.now()
     epd = epd7in5_V2.EPD() 
@@ -418,6 +484,30 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
             break
 
     offset = offset+5
+    
+    # AQI forecast
+    TOMORROW = ( datetime.now() + timedelta( hours=24 )).strftime("%Y-%m-%d") 
+    DAYAFTER = ( datetime.now() + timedelta( hours=45 )).strftime("%Y-%m-%d") 
+
+    forecastAQI = dict()
+
+    for item in AQIforecast: 
+        # print(item)
+        if item['DateForecast'].strip() == TOMORROW: 
+            forecastAQI.update({'tomorrowForecast': "{}".format(item['Discussion'])})
+
+        if item['ParameterName'].strip() == '03':
+            forecastAQI.update({'tomorrowO3': item['AQI']})
+            forecastAQI.update({'tomorrowO3categoryName': item['Category']['Name']})
+
+        if item['ParameterName'].strip() == 'PM2.5':
+            forecastAQI.update({'tomorrowPM2.5': item['AQI']})
+            forecastAQI.update({'tomorrowPM2.5categoryName': item['Category']['Name']})
+    
+    print(forecastAQI)
+
+
+
     if WaterTempratures== "No data was found.": 
 
         print(WaterTempratures)
@@ -446,6 +536,11 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
 
 def main(): 
 
+    updateDisplay = False
+    updateDisplay = True
+    
+
+
     stationID=8574680
     if args.stationID is not None: 
         stationID = args.stationID
@@ -462,15 +557,28 @@ def main():
         print("today: {}".format(tomorrow))
     
     # todayForecast = fetchNOAAdaily(today)
-    dayForcast = fetchNOAAdaily(today) # validated
+    (dayForcast,hash) = fetchNOAAdaily(today) # validated
+    print("old md5hash for dayForecast: {}".format(PreviousData['dayForcast']))
+    print("new md5hash for dayForecast: {}".format(hash))
+    if hash != PreviousData['dayForcast']: 
+        updateDisplay = True
+        PreviousData['dayForcast'] = hash
+
     hourlyForecast = fetchNOAAhourly(today) # validated 
     tidePredictions = fetchTides(stationID,today,tomorrow)
     waterTempratures = fetchWaterTemps(stationID,today,tomorrow) 
     currentAQI = fetchAQI()
-    currentWeatherAlerts = fetchActiveAlerts()
+    AQIforecast = fetchAQIforecast()
+
+    (currentWeatherAlerts, hash) = fetchActiveAlerts()
     localTemprature = fetchLocalTemprature()
 
-    drawFrame(localTemprature,dayForcast,hourlyForecast, tidePredictions, waterTempratures,currentAQI,currentWeatherAlerts)
+
+    if updateDisplay is True: 
+        drawFrame(localTemprature,dayForcast,hourlyForecast, tidePredictions, waterTempratures,currentAQI,currentWeatherAlerts,AQIforecast)
+    else: 
+        print("no data change..... no updates")
+
 
 if __name__ == '__main__': 
     if args.verbose is True: 
