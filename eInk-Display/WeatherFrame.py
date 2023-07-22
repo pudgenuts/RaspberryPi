@@ -417,17 +417,6 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
         draw.line((0, 100, 800, 100), fill = 0,width = 5 ) # horizontal line
         off = 110
 
-
-    # old header row code  
-    # N = now.strftime("%B %d, %Y  %H:%M") 
-    # draw.text((15, 20), N , font = font24, fill = 0) 
-    # if type(OutsideTemp) is str:
-    #     currentTemp = "current temp: unknown" 
-    # else: 
-    #     currentTemp = "current temp: {:.2f} F".format(OutsideTemp) 
-    # draw.text((500, 20), currentTemp , font = font24, fill = 0) # was font24..... 
-    # draw.line((0, 60, 800, 60), fill = 0,width = 5 ) # horizontal line
-
     # off = 110
     totalLines = 0 
     for line in dayForcast: 
@@ -483,7 +472,7 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
         if count == 3: 
             break
 
-    offset = offset+5
+    # offset = offset+5
     
     # AQI forecast
     TOMORROW = ( datetime.now() + timedelta( hours=24 )).strftime("%Y-%m-%d") 
@@ -504,13 +493,12 @@ def drawFrame(OutsideTemp, dayForcast, hours, tidePredictions, WaterTempratures,
             forecastAQI.update({'tomorrowPM2.5': item['AQI']})
             forecastAQI.update({'tomorrowPM2.5categoryName': item['Category']['Name']})
     
-    print(forecastAQI)
-
-
+    print(forecastAQI) 
+    print(WaterTempratures)
 
     if WaterTempratures== "No data was found.": 
-
         print(WaterTempratures)
+    else: 
         newLine = 0
         string = "" 
         draw.line((400,offset, 800, offset), fill = 0,width = 5 )  # horizontal line 
